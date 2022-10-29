@@ -1,0 +1,11 @@
+{
+  "devDependencies": {
+    "@openzeppelin/truffle-upgrades": "^1.17.0",
+    "erc721a": "^4.2.3"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.7.3",
+    "keccak256": "^1.0.6",
+    "merkletreejs": "^0.2.32"
+  }
+}
