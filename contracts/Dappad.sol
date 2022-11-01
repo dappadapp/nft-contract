@@ -18,22 +18,25 @@ contract Dappad is ERC721Enumerable, Ownable, ReentrancyGuard {
     struct Tier {
         uint256 price;
         uint256 startIndex;
-        uint256 totalSupply;
-        Counters.Counter counter;
+        uint256 endIndex;
+        uint256 maxSupply;
+        Counters.Counter totalSupply;
         bool enabled;
     }
 
-    bytes32 public root;
+    mapping(address => bool) public moderators;
+
+    bytes32 private root;
     address proxyAddress;
     string public baseTokenURI;
     string public baseExtension = ".json";
     bool public paused = false;
     bool public preMint = false;
     bool public communityMint = false;
-    mapping(address => uint256) presaleClaims;
-    uint256 presaleMintLimit = 2;
+    mapping(address => uint256) public presaleClaims;
+    uint256 public presaleMintLimit = 2;
     Tier[] private tiers;
-    uint256 private max = 1200;
+    uint256 public max = 1200;
 
     constructor(string memory uri,
         bytes32 merkleroot,
@@ -42,16 +45,30 @@ contract Dappad is ERC721Enumerable, Ownable, ReentrancyGuard {
     ReentrancyGuard() {
         root = merkleroot;
         proxyAddress = _proxyRegistryAddress;
+        baseTokenURI = uri;
 
-        tiers.push(Tier(0.04 ether, 1, 0, Counters.Counter(0), true));
-        tiers.push(Tier(0.05 ether, 50, 0, Counters.Counter(0), true));
-        tiers.push(Tier(0.06 ether, 90, 0, Counters.Counter(0), true));
+        moderators[msg.sender] = true;
 
-        setBaseURI(uri);
+        tiers.push(Tier(0.04 ether, 1, 59,0, Counters.Counter(0), true));
+        tiers.push(Tier(0.05 ether, 60, 199, 0, Counters.Counter(0), true));
+        tiers.push(Tier(0.06 ether, 200, 300,0, Counters.Counter(0), true));
+    }
+
+    function addModerator(address _moderator) public onlyOwner {
+        moderators[_moderator] = true;
+    }
+
+    function removeModerator(address _moderator) public onlyOwner {
+        moderators[_moderator] = false;
     }
 
     modifier onlyAccounts () {
         require(msg.sender == tx.origin, "Not allowed origin");
+        _;
+    }
+
+    modifier onlyModerators () {
+        require(moderators[msg.sender] == true, "Not allowed");
         _;
     }
 
@@ -80,35 +97,40 @@ contract Dappad is ERC721Enumerable, Ownable, ReentrancyGuard {
 
     function getSupply(uint256 _index) public view returns (uint256) {
         Tier memory tier = tiers[_index];
-        return tier.totalSupply;
+        return tier.maxSupply;
     }
 
-    function setTotalSupply(uint256 _index, uint256 _amount) public onlyOwner {
+    function verifyWhitelist( address account, bytes32[] calldata merkleProof ) external view returns (bool) {
+        bytes32 leaf = keccak256(abi.encodePacked(account));
+        return MerkleProof.verify(merkleProof, root, leaf);
+    }
+
+    function setMaxSupply(uint256 _index, uint256 _amount) public onlyModerators {
         Tier storage tier = tiers[_index];
-        tier.totalSupply = _amount;
+        tier.maxSupply = _amount;
     }
 
-    function addTotalSupply(uint256 _index, uint256 _amount) public onlyOwner {
+    function addMaxSupply(uint256 _index, uint256 _amount) public onlyModerators {
         Tier storage tier = tiers[_index];
-        tier.totalSupply = tier.totalSupply + _amount;
+        tier.maxSupply = tier.maxSupply + _amount;
     }
 
-    function enableTier(uint256 _index) external onlyOwner {
+    function enableTier(uint256 _index) external onlyModerators {
         Tier storage tier = tiers[_index];
         tier.enabled = true;
     }
 
-    function disableTier(uint256 _index) external onlyOwner {
+    function disableTier(uint256 _index) external onlyModerators {
         Tier storage tier = tiers[_index];
         tier.enabled = false;
     }
 
-    function setMintPrice(uint256 _index, uint256 _amount) external onlyOwner {
+    function setMintPrice(uint256 _index, uint256 _amount) external onlyModerators {
         Tier storage tier = tiers[_index];
         tier.price = _amount;
     }
 
-    function mintByOwner(uint256 _index, uint256 _amount) external onlyOwner onlyAccounts {
+    function mintByOwner(uint256 _index, uint256 _amount) external onlyModerators onlyAccounts {
         for (uint256 i = 0; i < _amount; i++) {
             _safeTierMint(owner(), _index);
         }
@@ -133,8 +155,8 @@ contract Dappad is ERC721Enumerable, Ownable, ReentrancyGuard {
         }
     }
 
-    function withdrawAll() external onlyOwner {
-        Address.sendValue(payable(owner()), address(this).balance);
+    function withdrawAll(address _target) external onlyOwner {
+        Address.sendValue(payable(_target), address(this).balance);
     }
 
     function communitySaleMint(uint256 _index, uint256 _amount) external payable onlyAccounts {
@@ -156,37 +178,38 @@ contract Dappad is ERC721Enumerable, Ownable, ReentrancyGuard {
     function _safeTierMint(address account, uint _index) private nonReentrant {
         require(_index < tiers.length, "Invalid tier");
         Tier storage tier = tiers[_index];
-        uint256 total = tier.startIndex + tier.counter.current();
-        require(total <= tier.totalSupply, "Tier limit reached");
-        _safeMint(account, total);
-        tier.counter.increment();
+        uint256 index = tier.startIndex + tier.totalSupply.current();
+        require(tier.endIndex >= index, "Tier is sold out");
+        require(index <= tier.startIndex+tier.maxSupply, "Tier limit reached");
+        _safeMint(account, index);
+        tier.totalSupply.increment();
     }
 
     function _baseURI() internal view virtual override returns (string memory) {
         return baseTokenURI;
     }
 
-    function setBaseURI(string memory _baseTokenURI) public onlyOwner {
+    function setBaseURI(string memory _baseTokenURI) public onlyModerators {
         baseTokenURI = _baseTokenURI;
     }
 
-    function setBaseExtension(string memory _newBaseExtension) external onlyOwner {
+    function setBaseExtension(string memory _newBaseExtension) external onlyModerators {
         baseExtension = _newBaseExtension;
     }
 
-    function setMerkleRoot(bytes32 merkleroot) external onlyOwner {
+    function setMerkleRoot(bytes32 merkleroot) external onlyModerators {
         root = merkleroot;
     }
 
-    function togglePause() external onlyOwner {
+    function togglePause() external onlyModerators {
         paused = !paused;
     }
 
-    function togglePresale() external onlyOwner {
+    function togglePresale() external onlyModerators {
         preMint = !preMint;
     }
 
-    function toggleCommunitySale() external onlyOwner {
+    function toggleCommunitySale() external onlyModerators {
         communityMint = !communityMint;
     }
 
@@ -208,7 +231,7 @@ contract Dappad is ERC721Enumerable, Ownable, ReentrancyGuard {
         : "";
     }
 
-    function isApprovedForAll(address owner, address operator) override(ERC721, IERC721) public view returns (bool) {
+    function isApprovedForAll(address owner, address operator) override(IERC721, ERC721) public view returns (bool) {
         ProxyRegistry proxyRegistry = ProxyRegistry(proxyAddress);
         if (address(proxyRegistry.proxies(owner)) == operator) {
             return true;

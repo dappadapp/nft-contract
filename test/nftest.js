@@ -81,7 +81,23 @@ contract("Dappad", (accounts) => {
         assert.equal(mintPrice, price);
         assert.ok(err instanceof Error);
     });
+    it("setMerkleRoot()", async () => {
+        const fakelistRoot = getList(addressList);
+        const rootHash = fakelistRoot.getRoot();
 
+        //owner
+        await instance.setMerkleRoot(rootHash, {from: owner});
+
+        //other
+        let err = null;
+        try {
+            await instance.setMerkleRoot(rootHash, {from: user2});
+        } catch (e) {
+            err = e;
+        }
+
+        assert.ok(err instanceof Error);
+    });
     it("setBaseURI()", async () => {
         let uri = 'ipfs://someipfs/';
 
@@ -117,26 +133,6 @@ contract("Dappad", (accounts) => {
         }
 
         assert.equal(instanceExtension, extension);
-        assert.ok(err instanceof Error);
-    });
-
-    it("setMerkleRoot()", async () => {
-        const fakelistRoot = getList(addressList);
-        const rootHash = fakelistRoot.getRoot();
-
-        //owner
-        await instance.setMerkleRoot(rootHash, {from: owner});
-        const instanceRoot = await instance.root({from: user1});
-
-        //other
-        let err = null;
-        try {
-            await instance.setMerkleRoot(rootHash, {from: user2});
-        } catch (e) {
-            err = e;
-        }
-
-        assert.equal(instanceRoot, '0x'+rootHash.toString('hex'));
         assert.ok(err instanceof Error);
     });
 
@@ -196,17 +192,17 @@ contract("Dappad", (accounts) => {
         assert.notEqual(instanceCommunityMint, old);
         assert.ok(err instanceof Error);
     });
-    it("addTotalSupply()", async () => {
+    it("addMaxSupply()", async () => {
         const old = await instance.getSupply(0,{from: user1});
 
         //owner
-        await instance.addTotalSupply(0,30,{from: owner});
+        await instance.addMaxSupply(0,30,{from: owner});
         const nw = await instance.getSupply(0,{from: user1});
 
         //other
         let err = null;
         try {
-            await instance.addTotalSupply(0,30,{from: user2});
+            await instance.addMaxSupply(0,30,{from: user2});
         } catch (e) {
             err = e;
         }
@@ -314,5 +310,20 @@ contract("Dappad", (accounts) => {
         const amount = await instance.totalSupply({from: user1});
 
         assert.equal(`${amount}`, `${22}`);
+    });
+
+    it("test by @can", async () => {
+
+        await instance.addMaxSupply(1,5, {from: owner});
+
+        const tier = await instance.getTier(1,{from: owner});
+
+        console.log(tier);
+
+        await instance.communitySaleMint(1,6, {value: ether(10), from: user3});
+
+        const list = await instance.tokensOfOwner(user3);
+
+        console.log(list);
     });
 });
