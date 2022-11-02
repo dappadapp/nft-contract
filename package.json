@@ -1,7 +1,9 @@
 {
   "devDependencies": {
     "@openzeppelin/truffle-upgrades": "^1.17.0",
-    "erc721a": "^4.2.3"
+    "@truffle/hdwallet-provider": "^2.1.0",
+    "erc721a": "^4.2.3",
+    "truffle-plugin-verify": "^0.5.32"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.7.3",
