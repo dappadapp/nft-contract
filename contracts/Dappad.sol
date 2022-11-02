@@ -43,15 +43,16 @@ contract Dappad is ERC721Enumerable, Ownable, ReentrancyGuard {
         address _proxyRegistryAddress)
     ERC721("Dappad", "DAPPAD")
     ReentrancyGuard() {
+
         root = merkleroot;
         proxyAddress = _proxyRegistryAddress;
         baseTokenURI = uri;
 
         moderators[msg.sender] = true;
 
-        tiers.push(Tier(0.04 ether, 1, 59,0, Counters.Counter(0), true));
-        tiers.push(Tier(0.05 ether, 60, 199, 0, Counters.Counter(0), true));
-        tiers.push(Tier(0.06 ether, 200, 300,0, Counters.Counter(0), true));
+        tiers.push(Tier(0.04 ether, 1, 10,0, Counters.Counter(0), true));
+        tiers.push(Tier(0.05 ether, 11, 20, 0, Counters.Counter(0), true));
+        tiers.push(Tier(0.06 ether, 21, 30,0, Counters.Counter(0), true));
     }
 
     function addModerator(address _moderator) public onlyOwner {
@@ -179,7 +180,6 @@ contract Dappad is ERC721Enumerable, Ownable, ReentrancyGuard {
         require(_index < tiers.length, "Invalid tier");
         Tier storage tier = tiers[_index];
         uint256 index = tier.startIndex + tier.totalSupply.current();
-        require(tier.endIndex >= index, "Tier is sold out");
         require(index <= tier.startIndex+tier.maxSupply, "Tier limit reached");
         _safeMint(account, index);
         tier.totalSupply.increment();

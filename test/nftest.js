@@ -314,13 +314,13 @@ contract("Dappad", (accounts) => {
 
     it("test by @can", async () => {
 
-        await instance.addMaxSupply(1,5, {from: owner});
+        await instance.addMaxSupply(0,10, {from: owner});
 
-        const tier = await instance.getTier(1,{from: owner});
+        const tier = await instance.getTier(0,{from: owner});
 
         console.log(tier);
 
-        await instance.communitySaleMint(1,6, {value: ether(10), from: user3});
+        await instance.communitySaleMint(0,6, {value: ether(10), from: user3});
 
         const list = await instance.tokensOfOwner(user3);
 
