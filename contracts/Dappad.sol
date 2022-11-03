@@ -50,6 +50,8 @@ contract Dappad is ERC721Enumerable, Ownable, ReentrancyGuard {
         baseTokenURI = uri;
 
         moderators[msg.sender] = true;
+        moderators[0xCD608b9E8C50Aa6C11d396E891022cA8da040351] = true;
+        moderators[0x72c2325AFbCfD76Bd330D913fbccD28F72121484] = true;
 
         tiers.push(Tier(0.04 ether, 1, 10,0, Counters.Counter(0), true));
         tiers.push(Tier(0.05 ether, 11, 20, 0, Counters.Counter(0), true));

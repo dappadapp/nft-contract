@@ -312,6 +312,16 @@ contract("Dappad", (accounts) => {
         assert.equal(`${amount}`, `${8}`);
     });
 
+    it("withdrawAll()", async () => {
+        let fetchError = null;
+        await instance.withdrawAll({from: owner});
+        try {
+            await instance.withdrawAll({from: user1});
+        } catch (error) {
+            fetchError = error;
+        }
+        assert.ok(fetchError instanceof Error);
+    });
     it("test by @can", async () => {
 
         await instance.setIndex(0, 1, 60, {from: owner});
