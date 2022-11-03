@@ -56,6 +56,10 @@ contract Dappad is ERC721Enumerable, Ownable, ReentrancyGuard {
         tiers.push(Tier(0.06 ether, 21, 30,0, Counters.Counter(0), true));
     }
 
+    function setMintLimit(uint256 _limit) public onlyModerators {
+        presaleMintLimit = _limit;
+    }
+
     function setIndex(uint256 _tier, uint256 _startIndex, uint256 _endIndex) public onlyModerators {
         Tier storage tier = tiers[_tier];
         tier.startIndex = _startIndex;
