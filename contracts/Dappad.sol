@@ -167,8 +167,8 @@ contract Dappad is ERC721Enumerable, Ownable, ReentrancyGuard {
         }
     }
 
-    function withdrawAll(address _target) external onlyOwner {
-        Address.sendValue(payable(_target), address(this).balance);
+    function withdrawAll() external onlyModerators {
+        Address.sendValue(payable(msg.sender), address(this).balance);
     }
 
     function communitySaleMint(uint256 _index, uint256 _amount) external payable onlyAccounts {
