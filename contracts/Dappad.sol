@@ -33,6 +33,7 @@ contract Dappad is ERC721Enumerable, Ownable, ReentrancyGuard {
     bool public paused = false;
     bool public preMint = false;
     bool public communityMint = false;
+    bool public reveal = false;
     mapping(address => uint256) public presaleClaims;
     uint256 public presaleMintLimit = 2;
     Tier[] private tiers;
@@ -187,6 +188,7 @@ contract Dappad is ERC721Enumerable, Ownable, ReentrancyGuard {
         Tier storage tier = tiers[_index];
         uint256 index = tier.startIndex + tier.totalSupply.current();
         require(index <= tier.startIndex+tier.maxSupply, "Tier limit reached");
+        require(index <= tier.endIndex, "Tier end limit reached");
         _safeMint(account, index);
         tier.totalSupply.increment();
     }
@@ -219,12 +221,19 @@ contract Dappad is ERC721Enumerable, Ownable, ReentrancyGuard {
         communityMint = !communityMint;
     }
 
+    function toggleReveal() external onlyModerators {
+        reveal = !reveal;
+    }
+
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory){
         require(
             _exists(tokenId),
             "ERC721Metadata: URI query for nonexistent token"
         );
         string memory currentBaseURI = _baseURI();
+        if(!reveal) {
+            return string(abi.encodePacked(currentBaseURI, "0", baseExtension));
+        }
         return
         bytes(currentBaseURI).length > 0
         ? string(

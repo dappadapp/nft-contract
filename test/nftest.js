@@ -193,16 +193,16 @@ contract("Dappad", (accounts) => {
         assert.ok(err instanceof Error);
     });
     it("addMaxSupply()", async () => {
-        const old = await instance.getSupply(0,{from: user1});
+        const old = await instance.getSupply(0, {from: user1});
 
         //owner
-        await instance.addMaxSupply(0,30,{from: owner});
-        const nw = await instance.getSupply(0,{from: user1});
+        await instance.addMaxSupply(0, 30, {from: owner});
+        const nw = await instance.getSupply(0, {from: user1});
 
         //other
         let err = null;
         try {
-            await instance.addMaxSupply(0,30,{from: user2});
+            await instance.addMaxSupply(0, 30, {from: user2});
         } catch (e) {
             err = e;
         }
@@ -218,7 +218,7 @@ contract("Dappad", (accounts) => {
         //pre mint
         let zeroError = null;
         try {
-            await instance.presaleMint(user1, 0,0, proof, {from: user1, value: ether(0.1*3)});
+            await instance.presaleMint(user1, 0, 0, proof, {from: user1, value: ether(0.1 * 3)});
         } catch (e) {
             zeroError = e;
         }
@@ -229,7 +229,7 @@ contract("Dappad", (accounts) => {
         //pre mint
         let preMintError = null;
         try {
-            await instance.presaleMint(user1, 0,3, proof, {from: user1, value: ether(0.1*3)});
+            await instance.presaleMint(user1, 0, 3, proof, {from: user1, value: ether(0.1 * 3)});
         } catch (e) {
             preMintError = e;
         }
@@ -240,7 +240,7 @@ contract("Dappad", (accounts) => {
         let pauseError = null;
         //paused
         try {
-            await instance.presaleMint(user1, 0,3, proof, {from: user1, value: ether(0.1*3)});
+            await instance.presaleMint(user1, 0, 3, proof, {from: user1, value: ether(0.1 * 3)});
         } catch (error) {
             pauseError = error;
         }
@@ -249,14 +249,14 @@ contract("Dappad", (accounts) => {
         await instance.togglePause({from: owner});
 
         //whitelisted
-        await instance.presaleMint(user1, 0, 2, proof, {from: user1, value: ether(0.1*3)});
+        await instance.presaleMint(user1, 0, 2, proof, {from: user1, value: ether(0.1 * 3)});
 
         let mintNumber = await instance.balanceOf(user1);
 
         //mint limit
         let maxMintError = null;
         try {
-            await instance.presaleMint(user1, 0,1, proof, {from: user1, value: ether(0.1)});
+            await instance.presaleMint(user1, 0, 1, proof, {from: user1, value: ether(0.1)});
         } catch (e) {
             maxMintError = e;
         }
@@ -287,11 +287,11 @@ contract("Dappad", (accounts) => {
     });
 
     it("communitySaleMint()", async () => {
-        await instance.communitySaleMint(0,10, {value: ether(10*0.1), from: user4});
+        await instance.communitySaleMint(0, 4, {value: ether(10 * 0.1), from: user4});
 
         const x = await instance.balanceOf(user4);
 
-        assert.equal(x, 10);
+        assert.equal(x, 4);
     });
 
     it("tokensOfOwner()", async () => {
@@ -301,26 +301,28 @@ contract("Dappad", (accounts) => {
     });
 
     it("mintByOwner()", async () => {
-        await instance.mintByOwner(0,10, {from: owner});
+        await instance.mintByOwner(0, 2, {from: owner});
 
         let list = await instance.tokensOfOwner(owner);
 
-        assert.equal(list.length, 10);
+        assert.equal(list.length, 2);
 
         const amount = await instance.totalSupply({from: user1});
 
-        assert.equal(`${amount}`, `${22}`);
+        assert.equal(`${amount}`, `${8}`);
     });
 
     it("test by @can", async () => {
 
-        await instance.addMaxSupply(0,10, {from: owner});
+        await instance.setIndex(0, 1, 60, {from: owner});
 
-        const tier = await instance.getTier(0,{from: owner});
+        await instance.setMaxSupply(0, 10, {from: owner});
+
+        const tier = await instance.getTier(0, {from: owner});
 
         console.log(tier);
 
-        await instance.communitySaleMint(0,6, {value: ether(10), from: user3});
+        await instance.communitySaleMint(0, 3, {value: ether(10), from: user3});
 
         const list = await instance.tokensOfOwner(user3);
 
